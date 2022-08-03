@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script src="https://unpkg.com/wavesurfer.js"></script>
+		<script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
+	</head>
+	<body>
+		<h1>Let's go!</h1>
+		<div id="music"></div>
+		<div id="play">Play</div>
+		<div id="comment">comment</div>
+		<div id="comments">
+			
+		</div>
+	</body>
+</html>
+
+
+<script type="text/javascript">
+	var regions = [];
+	var activeRegions = [];
+	
+	var wavesurfer = WaveSurfer.create({
+		container: '#music',
+		plugins: [
+			WaveSurfer.regions.create({})
+		]
+	});
+	wavesurfer.load("./The Pleasure Kills - Oblivion.mp3");
+	
+	/* Events */
+	wavesurfer.on('ready', function() {
+		wavesurfer.play();
+	});
+	wavesurfer.on('region-in', function(region) {
+		activeRegions.push(region);
+		renderComments();
+		console.log("region in");
+	});
+	wavesurfer.on('region-out', function(region) {
+		regionindex = activeRegions.findIndex((item) => item.id == region.id);
+		activeRegions.splice(regionindex, 1);
+		renderComments();
+	});
+	wavesurfer.on('click', function() {
+		time=wavesurfer.getCurrentTime();
+		regions.forEach((item) =>
+		{
+			if(item.start < time & item.end > time) {
+				activecomments.push(item);
+			}
+		});
+	})
+	
+	
+	
+	document.getElementById("play").addEventListener('click',function(){
+		if(wavesurfer.isReady)
+			wavesurfer.playPause();
+	})
+	document.getElementById("comment").addEventListener('click', function() {
+		let position = wavesurfer.getCurrentTime();
+		newregion = wavesurfer.addRegion({
+			start: position,
+			end: position+10,
+		});
+		newregion.comment = "this is a comment. Original start position is " + position;
+		regions.push(newregion);
+	
+		renderComments();
+			
+	})
+	
+	function renderComments() {
+		commentsSection = document.getElementById("comments");
+		
+		//clear all old info
+		while (commentsSection.firstChild) {
+		  commentsSection.removeChild(commentsSection.firstChild);
+		}
+		
+		activeRegions.forEach((item) => {
+			comment = new DocumentFragment();
+			content = document.createElement('p');
+			//content.textContent="comment text";
+			content.textContent = item.comment;
+			content.classList.className = item.id;
+			comment.appendChild(content);
+			commentsSection.appendChild(comment);
+
+		});
+	}
+	
+	function saveExport() {
+		var exportArray = {};
+		var exportRegions = [];
+		regions.forEach((region) => {
+			exportRegions.push({
+				start: region.start,
+				end: region.end,
+				comment: region.comment
+			})
+		})
+		exportArray.regions = exportRegions;
+		
+		
+		return exportArray;
+		
+	}
+	
+	function loadExport(exportdata) {
+		exportdata.regions.forEach((region) => {
+			newRegion = wavesurfer.addRegion({
+				start: region.start,
+				end: region.end
+			})
+			newRegion.comment = region.comment;
+		})
+	}
+	
+	
+</script>
